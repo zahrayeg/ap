@@ -33,16 +33,16 @@ public class DashboardView extends Application {
 
         // Menus Section (placeholders)
         VBox menuBox = createSection("Menus",
-                createButton("Add Restaurant Menu",        false),
-                createButton("Delete Restaurant Menu",     false),
-                createButton("Add Item to Restaurant Menu",false),
-                createButton("Delete Item from Rest.Menu", false)
+                createButton("Add Restaurant Menu",        true,  controller::openAddMenuPage),
+                createButton("Delete Restaurant Menu",     true,  controller::openDeleteMenuPage),
+                createButton("Add Item to Menu",true,  controller::openAddItemToMenuPage),
+                createButton("Delete Item fromMenu", true,  controller::openRemoveItemFromMenuPage)
         );
 
         // Orders Section (placeholders)
         VBox orderBox = createSection("Orders",
-                createButton("View Restaurant Orders",  false),
-                createButton("Change Order Status",     false)
+                createButton("View Restaurant Orders",   true, controller::openOrdersPage),
+                createButton("Change Order Status",     true, controller::openUpdateStatusPage)
         );
 
         HBox sections = new HBox(25, restaurantBox, foodBox, menuBox, orderBox);

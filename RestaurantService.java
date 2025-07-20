@@ -32,6 +32,29 @@ public class RestaurantService {
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> parseJsonResponse(response));
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public CompletableFuture<Map<String, Object>> getRestaurantById(int id, String token) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/restaurants/" + id))
@@ -51,7 +74,7 @@ public class RestaurantService {
 
 
         public CompletableFuture<List<Map<String, Object>>> getSellerRestaurants(String token) {
-        /*  کد واقعی برای اتصال به سرور
+
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(BASE_URL + "/restaurants/mine"))
             .header("Authorization", "Bearer " + token)
@@ -61,15 +84,9 @@ public class RestaurantService {
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
             .thenApply(response -> gson.fromJson(response.body(), new TypeToken<List<Map<String, Object>>>() {}.getType()));
-        */
 
-            //  داده تستی برای اجرا در حالت آفلاین
-            List<Map<String, Object>> sampleData = List.of(
-                    Map.of("id", "1", "name", "رستوران تستی", "address", "تهران", "phone", "09121234567", "tax_fee", "5", "additional_fee", "3000"),
-                    Map.of("id", "2", "name", "فست‌فود شبانه", "address", "اصفهان", "phone", "09361234567", "tax_fee", "4", "additional_fee", "2500")
-            );
 
-            return CompletableFuture.completedFuture(sampleData);
+
         }
 
 
@@ -142,6 +159,88 @@ public class RestaurantService {
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(this::parseJsonResponse);
     }
+    public CompletableFuture<List<Map<String, Object>>> getItemsByRestaurantId(String token, int restaurantId) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/restaurants/" + restaurantId + "/item"))
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    if (response.statusCode() == 200) {
+                        return gson.fromJson(response.body(),
+                                new TypeToken<List<Map<String, Object>>>(){}.getType());
+                    } else {
+                        throw new RuntimeException("Failed to load food items: " + response.body());
+                    }
+                });
+    }
+
+
+    public CompletableFuture<List<Map<String,Object>>> rawGetOrders(
+            String token, String fullUri)
+    {
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(fullUri))
+                .header("Authorization", token)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+
+        return client.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .thenApply(resp -> {
+                    if (resp.statusCode() == 200) {
+                        return gson.fromJson(resp.body(),
+                                new TypeToken<List<Map<String,Object>>>(){}.getType());
+                    }
+                    throw new RuntimeException("Error " + resp.statusCode() + ": " + resp.body());
+                });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    public CompletableFuture<List<Map<String,Object>>> getFilteredOrders(String token, int restaurantId, Map<String, String> queryParams) {
+        StringBuilder uri = new StringBuilder(BASE_URL + "/restaurants/" + restaurantId + "/orders");
+
+        if (queryParams != null && !queryParams.isEmpty()) {
+            uri.append("?");
+            queryParams.forEach((k, v) -> uri.append(k).append("=").append(v).append("&"));
+            uri.setLength(uri.length() - 1); // حذف آخرین &
+        }
+
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(uri.toString()))
+                .header("Authorization", token.startsWith("Bearer ") ? token : "Bearer " + token)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+
+        return client.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .thenApply(resp -> {
+                    if (resp.statusCode() == 200) {
+                        return gson.fromJson(resp.body(), new TypeToken<List<Map<String,Object>>>(){}.getType());
+                    } else {
+                        throw new RuntimeException("Error " + resp.statusCode() + ": " + resp.body());
+                    }
+                });
+    }
+
+
+
+
+
+
 
     // ️ حذف آیتم غذا
     public CompletableFuture<Map<String, Object>> deleteFoodItem(int itemId, String token) {
@@ -156,6 +255,25 @@ public class RestaurantService {
                 .thenApply(this::parseJsonResponse);
     }
 
+    // دریافت سفارشات یک رستوران
+    public CompletableFuture<List<Map<String, Object>>> getRestaurantOrders(String token, int restaurantId) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/restaurants/" + restaurantId + "/orders"))
+                .header("Authorization", token.startsWith("Bearer") ? token : "Bearer " + token)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    if (response.statusCode() == 200) {
+                        return gson.fromJson(response.body(),
+                                new TypeToken<List<Map<String, Object>>>(){}.getType());
+                    } else {
+                        throw new RuntimeException("Failed to fetch orders: " + response.body());
+                    }
+                });
+    }
     // ️ افزودن منو برای رستوران
     public CompletableFuture<Map<String, Object>> addMenu(int restaurantId, String title, String token) {
         Map<String, Object> body = Map.of("title", title);
