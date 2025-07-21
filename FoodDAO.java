@@ -4,7 +4,12 @@ import Entity.Food;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import util.HibernateUtil;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.List;
+import java.util.UUID;
 
 public class FoodDAO {
 
@@ -17,6 +22,16 @@ public class FoodDAO {
         } catch (Exception e) {
             if (tx != null) tx.rollback();
             e.printStackTrace();
+        }
+    }
+
+    public List<Food> findAll() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaQuery<Food> cq = cb.createQuery(Food.class);
+            Root<Food> root = cq.from(Food.class);
+            cq.select(root);
+            return session.createQuery(cq).getResultList();
         }
     }
 
@@ -44,17 +59,21 @@ public class FoodDAO {
         }
     }
 
-    public Food findById(int foodId) {
+    public Food findById(UUID foodId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.get(Food.class, foodId);
         }
     }
 
-    public List<Food> findAllByRestaurant(int restaurantId) {
+    public List<Food> findAllByRestaurant(UUID restaurantId) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("SELECT f FROM Food f WHERE f.restaurant.id = :restaurantId", Food.class)
-                    .setParameter("restaurantId", restaurantId)
-                    .getResultList();
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaQuery<Food> cq = cb.createQuery(Food.class);
+            Root<Food> root = cq.from(Food.class);
+
+            cq.select(root).where(cb.equal(root.get("restaurant").get("id"), restaurantId));
+
+            return session.createQuery(cq).getResultList();
         }
     }
 }
