@@ -1,58 +1,67 @@
 package DAO;
 
-import Entity.Restaurant;
+import entity.Restaurant;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import util.HibernateUtil;
+
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class RestaurantDAO {
+    private static final SessionFactory sessionFactory = HibernateUtil.buildSessionFactory();
+
+    public RestaurantDAO() {}
 
     public void save(Restaurant restaurant) {
-        Transaction tx = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            tx = session.beginTransaction();
+        try (Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
             session.save(restaurant);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) tx.rollback();
-            e.printStackTrace();
-        }
-    }
-
-    public void delete(Restaurant restaurant) {
-        Transaction tx = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            tx = session.beginTransaction();
-            session.delete(restaurant);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) tx.rollback();
-            e.printStackTrace();
+            session.getTransaction().commit();
         }
     }
 
     public void update(Restaurant restaurant) {
-        Transaction tx = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            tx = session.beginTransaction();
+        try (Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
             session.update(restaurant);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) tx.rollback();
-            e.printStackTrace();
+            session.getTransaction().commit();
         }
     }
 
-    public Restaurant findById(int id) {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.get(Restaurant.class, id);
+    public List<Restaurant> findBySellerId(UUID sellerId) {
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery(
+                            "FROM entity.Restaurant r WHERE r.seller.id = :sellerId", Restaurant.class)
+                    .setParameter("sellerId", sellerId)
+                    .list();
+        }
+    }
+
+    public void delete(Restaurant restaurant) {
+        try (Session session = sessionFactory.openSession()) {
+            session.beginTransaction();
+            session.delete(restaurant);
+            session.getTransaction().commit();
+        }
+    }
+
+    public Optional<Restaurant> findById(UUID id) {
+        try (Session session = sessionFactory.openSession()) {
+            return Optional.ofNullable(session.get(Restaurant.class, id));
         }
     }
 
     public List<Restaurant> findAll() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            return session.createQuery("SELECT r FROM Restaurant r", Restaurant.class).getResultList();
+        try (Session session = sessionFactory.openSession()) {
+            Query<Restaurant> query = session.createQuery("FROM entity.Restaurant", Restaurant.class);
+            return query.list();
         }
     }
+
+
+
+
 }
