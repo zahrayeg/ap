@@ -6,60 +6,86 @@ import model.RestaurantDTO;
 import service.RestaurantService;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class EditRestaurantController {
     private final RestaurantService service = new RestaurantService();
-    private final String token = "Bearer YOUR_VALID_TOKEN_HERE"; // جایگزین کن با توکن واقعی
+    private final String token = "Bearer YOUR_VALID_TOKEN_HERE";
 
-    public void handleUpdate(String idText, String name, String address, String phone,
-                             String logoBase64, String taxFeeText, String additionalFeeText, Label statusLabel) {
+    public void handleUpdate(
+            String idText,
+            String name,
+            String address,
+            String phone,
+            String logoBase64,
+            String taxFeeText,
+            String additionalFeeText,
+            Label statusLabel
+    ) {
+        int id;
+        int taxFee;
+        int additionalFee;
+
+        // parse and validate ID
         try {
-            int id = Integer.parseInt(idText.trim());
+            id = Integer.parseInt(idText.trim());
+        } catch (NumberFormatException e) {
+            statusLabel.setText(" Invalid restaurant ID.");
+            return;
+        }
 
-            // مرحله ۱: گرفتن اطلاعات فعلی از سرور
-            service.getRestaurantById(id, token).thenAccept(previous -> Platform.runLater(() -> {
-                if (previous == null || previous.isEmpty()) {
-                    statusLabel.setText("❌ Restaurant not found.");
-                    return;
-                }
+        // validate required text fields
+        if (name == null || name.isBlank() ||
+                address == null || address.isBlank() ||
+                phone == null || phone.isBlank() ||
+                logoBase64 == null || logoBase64.isBlank() ||
+                taxFeeText == null || taxFeeText.isBlank() ||
+                additionalFeeText == null || additionalFeeText.isBlank()) {
+            statusLabel.setText("All fields are required.");
+            return;
+        }
 
-                RestaurantDTO dto = new RestaurantDTO();
+        // validate phone numeric
+        if (!phone.matches("\\d+")) {
+            statusLabel.setText(" Phone must be numeric.");
+            return;
+        }
 
-                // مرحله ۲: فقط فیلدهای پرشده رو تغییر بده
-                dto.setName(name.isEmpty() ? previous.get("name").toString() : name);
-                dto.setAddress(address.isEmpty() ? previous.get("address").toString() : address);
-                dto.setPhone(phone.isEmpty() ? previous.get("phone").toString() : phone);
+        // parse and validate fee fields
+        try {
+            taxFee = Integer.parseInt(taxFeeText.trim());
+            additionalFee = Integer.parseInt(additionalFeeText.trim());
+        } catch (NumberFormatException e) {
+            statusLabel.setText("Tax and Additional fees must be numbers.");
+            return;
+        }
 
-                dto.setLogoBase64(logoBase64 != null ? logoBase64 : previous.get("logoBase64").toString());
+        // build DTO
+        RestaurantDTO dto = new RestaurantDTO();
+        dto.setName(name.trim());
+        dto.setAddress(address.trim());
+        dto.setPhone(phone.trim());
+        dto.setLogoBase64(logoBase64.trim());
+        dto.setTaxFee(taxFee);
+        dto.setAdditionalFee(additionalFee);
 
-                try {
-                    dto.setTax_fee(taxFeeText.isEmpty() ? ((Number) previous.get("tax_fee")).intValue()
-                            : Integer.parseInt(taxFeeText.trim()));
-                    dto.setAdditional_fee(additionalFeeText.isEmpty() ? ((Number) previous.get("additional_fee")).intValue()
-                            : Integer.parseInt(additionalFeeText.trim()));
-                } catch (NumberFormatException e) {
-                    statusLabel.setText("❌ Invalid number format in fees.");
-                    return;
-                }
-
-                // مرحله ۳: ارسال درخواست به‌روزرسانی
-                service.updateRestaurant(id, dto, token).thenAccept(response -> Platform.runLater(() -> {
+        // send PUT request
+        service.updateRestaurant(token, id, dto)
+                .thenAccept(response -> Platform.runLater(() -> {
                     int status = ((Number) response.get("status")).intValue();
-                    String message = response.getOrDefault("message", "No message").toString();
-                    if (status == 200) {
-                        statusLabel.setText("✅ Restaurant updated: " + message);
+                    String msg = response.containsKey("message")
+                            ? response.get("message").toString()
+                            : response.getOrDefault("error", "Unknown").toString();
+                    if (status >= 200 && status < 300) {
+                        statusLabel.setText("✅ Updated successfully.");
                     } else {
-                        statusLabel.setText("❌ Error (" + status + "): " + message);
+                        statusLabel.setText(" Error (" + status + "): " + msg);
                     }
-                })).exceptionally(ex -> {
-                    Platform.runLater(() -> statusLabel.setText("❌ Exception: " + ex.getMessage()));
+                }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() ->
+                            statusLabel.setText(" Request failed: " + ex.getMessage())
+                    );
                     return null;
                 });
-
-            }));
-        } catch (NumberFormatException e) {
-            statusLabel.setText("❌ Invalid restaurant ID.");
-        }
     }
 }

@@ -15,34 +15,31 @@ public class UpdateOrderStatusController {
     private final Gson gson = new Gson();
     private final String token = "Bearer your-token";
 
-    // بارگذاری رستوران‌ها
     public CompletableFuture<List<RestaurantEntry>> loadRestaurants() {
         return service.getSellerRestaurants(token)
                 .thenApply(list -> list.stream()
                         .map(m -> new RestaurantEntry(
-                                ((Number)m.get("id")).intValue(),
+                                ((Number) m.get("id")).intValue(),
                                 m.get("name").toString()))
                         .toList());
     }
 
-    // بارگذاری سفارش‌های رستوران انتخاب‌شده
     public CompletableFuture<List<OrderEntry>> loadOrdersForRestaurant(int restaurantId) {
-        return service.getRestaurantOrders(token, restaurantId)
+        return service.getOrders(token, restaurantId)
                 .thenApply(list -> list.stream()
                         .map(m -> new OrderEntry(
-                                ((Number)m.get("id")).intValue(),
+                                ((Number) m.get("id")).intValue(),
                                 m.get("status").toString()))
                         .toList());
     }
 
-    // ارسال تغییر وضعیت و دریافت پیام
     public CompletableFuture<String> updateStatus(int orderId, String newStatus) {
-        return service.updateOrderStatus(orderId, newStatus, token)
+        return service.patchOrderStatus(token, String.valueOf(orderId), newStatus)
                 .thenApply(map -> map.getOrDefault("message", "Status updated").toString())
                 .exceptionally(ex -> {
                     try {
-                        Type t = new TypeToken<Map<String,Object>>(){}.getType();
-                        Map<String,Object> err = gson.fromJson(ex.getMessage(), t);
+                        Type t = new TypeToken<Map<String, Object>>() {}.getType();
+                        Map<String, Object> err = gson.fromJson(ex.getMessage(), t);
                         return err.getOrDefault("error", ex.getMessage()).toString();
                     } catch (Exception e) {
                         return "Unexpected error: " + ex.getMessage();
@@ -50,10 +47,10 @@ public class UpdateOrderStatusController {
                 });
     }
 
-    // مدل‌های کمکی
     public record RestaurantEntry(int id, String name) {
         @Override public String toString() { return name; }
     }
+
     public record OrderEntry(int id, String status) {
         @Override public String toString() { return "Order #" + id + " [" + status + "]"; }
     }

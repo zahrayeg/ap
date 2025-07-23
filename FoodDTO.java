@@ -1,24 +1,39 @@
-package dto;
+package model;
 
 public class FoodDTO {
     private String name;
-    private double price;
-    private String category;
+    private String description;
+    private int price;
 
-    public FoodDTO() {}
+    public FoodDTO() { }
 
-    public FoodDTO(String name, double price, String category) {
+    public FoodDTO(String name, String description, int price) {
         this.name = name;
+        this.description = description;
         this.price = price;
-        this.category = category;
     }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() {
+        return name;
+    }
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public int getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
 }
