@@ -1,48 +1,57 @@
-package view;
+package org.example.demo1.view;
 
-import controller.DashboardController;
-import javafx.application.Application;
-import javafx.geometry.*;
+import org.example.demo1.controller.DashboardController;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class DashboardView extends Application {
+public class DashboardView {
+    private final Stage stage;
+    private final String token;
+    private final DashboardController controller;
 
-    @Override
-    public void start(Stage stage) {
-        DashboardController controller = new DashboardController(stage);
+    public DashboardView(Stage stage, String token) {
+        this.stage = stage;
+        this.token = token;
+        this.controller = new DashboardController(stage);
+        setupUI();
+    }
 
+    private void setupUI() {
         Label title = new Label("Seller Dashboard");
         title.setStyle("-fx-font-size: 18px; -fx-text-fill: white; -fx-font-weight: bold;");
 
         // Restaurant Section
         VBox restaurantBox = createSection("Restaurant",
-                createButton("My Restaurants",   true,  controller::openViewRestaurants),
-                createButton("Create Restaurant",true,  controller::openAddRestaurant),
-                createButton("Update Restaurant",true,  controller::openEditRestaurant)
+                createButton("My Restaurants", true, controller::openViewRestaurants),
+                createButton("Create Restaurant", true, controller::openAddRestaurant),
+                createButton("Update Restaurant", true, controller::openEditRestaurant)
         );
 
         // Food Items Section
         VBox foodBox = createSection("Food Items",
-                createButton("Add Food Item",     true,  controller::openAddFoodItem),
-                createButton("Edit Food Item",    true,  controller::openEditFoodItem),
-                createButton("Delete Food Item",  true,  controller::openDeleteFoodItemPage)
+                createButton("Add Food Item", true, controller::openAddFoodItem),
+                createButton("Edit Food Item", true, controller::openEditFoodItem),
+                createButton("Delete Food Item", true, controller::openDeleteFoodItemPage)
         );
 
         // Menus Section (placeholders)
         VBox menuBox = createSection("Menus",
-                createButton("Add Restaurant Menu",        false),
-                createButton("Delete Restaurant Menu",     false),
-                createButton("Add Item to Restaurant Menu",false),
+                createButton("Add Restaurant Menu", false),
+                createButton("Delete Restaurant Menu", false),
+                createButton("Add Item to Restaurant Menu", false),
                 createButton("Delete Item from Rest.Menu", false)
         );
 
         // Orders Section (placeholders)
         VBox orderBox = createSection("Orders",
-                createButton("View Restaurant Orders",  false),
-                createButton("Change Order Status",     false)
+                createButton("View Restaurant Orders", false),
+                createButton("Change Order Status", false)
         );
 
         HBox sections = new HBox(25, restaurantBox, foodBox, menuBox, orderBox);
@@ -53,8 +62,9 @@ public class DashboardView extends Application {
         root.setAlignment(Pos.TOP_CENTER);
         root.setStyle("-fx-background-color: #1e3a5f;");
 
+        Scene scene = new Scene(root, 1000, 420);
+        stage.setScene(scene);
         stage.setTitle("Dashboard");
-        stage.setScene(new Scene(root, 1000, 420));
         stage.show();
     }
 
@@ -79,9 +89,5 @@ public class DashboardView extends Application {
         Button btn = createButton(text, enabled);
         if (enabled) btn.setOnAction(e -> action.run());
         return btn;
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

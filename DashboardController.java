@@ -1,8 +1,8 @@
-package controller;
+package org.example.demo1.controller;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
-import view.*;
+import org.example.demo1.view.*;
 
 public class DashboardController {
 
